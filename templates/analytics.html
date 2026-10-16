@@ -1,0 +1,124 @@
+{% extends 'base.html' %}{% block title %}Analytics · PeoplePulse{% endblock
+%}{% block page_heading %}Workforce analytics{% endblock %}{% block content %}
+<div class="page-intro">
+  <div>
+    <h2>Workforce analytics</h2>
+    <p>
+      Explore attrition, compensation, and tenure patterns across departments.
+    </p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('main.reports') }}"
+    >View reports →</a
+  >
+</div>
+<div class="card-clean section-card mb-3">
+  <h3 class="section-title">Filter analytics</h3>
+  <p class="section-subtitle">Date range filters employee joining dates, not verified exit dates; the dataset does not contain a dedicated exit date.</p>
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label">Joined from</label><input class="form-control" type="date" name="start_date" value="{{ start_date }}"></div>
+    <div class="col-md-3"><label class="form-label">Joined through</label><input class="form-control" type="date" name="end_date" value="{{ end_date }}"></div>
+    <div class="col-md-3"><label class="form-label">Department</label><select class="form-select" name="department"><option value="">All departments</option>{% for d in department_options %}<option value="{{ d }}" {% if selected_department == d %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div>
+    <div class="col-md-3 d-flex gap-2"><button class="btn btn-primary">Apply filters</button><a class="btn btn-outline-secondary" href="{{ url_for('main.analytics') }}">Reset</a></div>
+  </form>
+  <div class="mt-3"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.analytics_export', start_date=start_date, end_date=end_date, department=selected_department) }}">Download filtered department CSV</a></div>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-xl-7">
+    <div class="card-clean section-card">
+      <h3 class="section-title">Department attrition rate</h3>
+      <p class="section-subtitle">
+        Recorded exits as a percentage of headcount
+      </p>
+      <div class="chart-box"><canvas id="attritionChart"></canvas></div><button class="btn btn-sm btn-outline-secondary mt-2" onclick="downloadChart('attritionChart', 'department_attrition_chart.png')">Download chart PNG</button>
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="card-clean section-card">
+      <h3 class="section-title">Tenure distribution</h3>
+      <p class="section-subtitle">Employees grouped by years at company</p>
+      <div class="chart-box"><canvas id="tenureChart"></canvas></div><button class="btn btn-sm btn-outline-secondary mt-2" onclick="downloadChart('tenureChart', 'tenure_distribution_chart.png')">Download chart PNG</button>
+    </div>
+  </div>
+</div>
+<div class="card-clean section-card mb-3">
+  <h3 class="section-title">Department comparison</h3>
+  <p class="section-subtitle mb-3">
+    Headcount, average salary and average tenure
+  </p>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Headcount</th>
+          <th>Recorded exits</th>
+          <th>Attrition rate</th>
+          <th>Avg monthly salary</th>
+          <th>Avg tenure</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in departments %}
+        <tr>
+          <td class="emp-name">{{ d.department }}</td>
+          <td>{{ d.total }}</td>
+          <td>{{ d.attrited or 0 }}</td>
+          <td>
+            <span
+              class="pill {% if d.total and (d.attrited or 0)/d.total>=0.2 %}pill-high{% else %}pill-neutral{% endif %}"
+              >{{ '%.1f'|format(((d.attrited or 0)/d.total*100) if d.total else
+              0) }}%</span
+            >
+          </td>
+          <td>₹{{ (d.avg_salary or 0)|int }}</td>
+          <td>{{ d.avg_tenure or 0 }} yrs</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card-clean section-card">
+  <h3 class="section-title">Historical attrition records</h3>
+  <p class="section-subtitle mb-3">
+    Employees marked as exited in the imported dataset. This is not the ML risk
+    list.
+  </p>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Department</th>
+          <th>Job satisfaction</th>
+          <th>Overtime</th>
+          <th>Tenure</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in highrisk %}
+        <tr>
+          <td>
+            <span class="emp-name">{{ e.name }}</span
+            ><small class="muted d-block">{{ e.employee_code }}</small>
+          </td>
+          <td>{{ e.department }}</td>
+          <td>{{ e.job_satisfaction }}/4</td>
+          <td>{{ e.overtime }}</td>
+          <td>{{ e.years_at_company }} yrs</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="empty-state">No historical exits recorded.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}{% block scripts %}
+<script>
+  function downloadChart(id,filename){const a=document.createElement("a");a.href=document.getElementById(id).toDataURL("image/png");a.download=filename;a.click();}
+  const dep={{ departments|tojson }};const ten={{ tenure|tojson }};new Chart(document.getElementById('attritionChart'),{type:'bar',data:{labels:dep.map(x=>x.department),datasets:[{label:'Attrition rate %',data:dep.map(x=>x.total?Math.round((x.attrited||0)/x.total*1000)/10:0),backgroundColor:'#657bec',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>v+'%'}}}}});new Chart(document.getElementById('tenureChart'),{type:'doughnut',data:{labels:ten.map(x=>x.tenure_band),datasets:[{data:ten.map(x=>x.total),backgroundColor:['#536fe9','#76b7ef','#7bd4b0','#f3c26e'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,padding:14,font:{size:10}}}}}});
+</script>
+{% endblock %}

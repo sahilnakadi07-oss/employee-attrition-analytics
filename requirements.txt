@@ -1,0 +1,9 @@
+Flask>=3.0,<4.0
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+joblib>=1.3
+matplotlib>=3.7
+pytz>=2024.1
+
+# Security protections are implemented in-app; no extra CSRF package required.

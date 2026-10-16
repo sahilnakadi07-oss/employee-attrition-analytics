@@ -1,0 +1,155 @@
+{% extends 'base.html' %}{% block title %}Attrition prediction · PeoplePulse{%
+endblock %}{% block page_heading %}Attrition prediction{% endblock %}{% block
+content %}
+<div class="page-intro">
+  <div>
+    <h2>Attrition prediction</h2>
+    <p>
+      Estimate model-assessed attrition probability and review prediction
+      history.
+    </p>
+  </div>
+  {% if session.get('role') == 'Admin' %}<form method="post" action="{{ url_for('main.train') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-primary">↻ Train / evaluate model</button>
+  </form>{% endif %}
+</div>
+{% if not trained %}
+<div class="alert alert-warning">
+  No trained model found yet. Train the model in Reports & model before
+  predicting.
+</div>
+{% endif %}
+<div class="row g-3 mb-4">
+  <div class="col-xl-6">
+    <div class="card-clean section-card h-100">
+      <h3 class="section-title mb-2">Assess an employee</h3>
+      <p class="section-subtitle mb-4">
+        Use the saved employee profile as model input.
+      </p>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="mode" value="employee" />
+        <div class="mb-3">
+          <label class="form-label">SELECT EMPLOYEE</label
+          ><select class="form-select" name="employee_id" required>
+            <option value="">Choose employee...</option>
+            {% for e in employees %}
+            <option value="{{ e.employee_id }}">
+              {{ e.employee_code }} · {{ e.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <p class="small-note mb-3">
+          The model uses age, department, role, salary, satisfaction, work-life
+          balance, overtime, tenure, training, performance, absence and
+          demographic fields available in the profile.
+        </p>
+        <button class="btn btn-primary" {% if not trained %}disabled{% endif %}>
+          Predict attrition risk →
+        </button>
+      </form>
+    </div>
+  </div>
+  <div class="col-xl-6">
+    {% if result %}
+    <div class="card-clean section-card h-100">
+      <h3 class="section-title mb-2">Prediction result</h3>
+      <p class="section-subtitle mb-4">
+        {{ result.name }} · {{ result.model }}
+      </p>
+      <div class="result-card">
+        <div class="muted mb-2">MODEL-ESTIMATED ATTRITION PROBABILITY</div>
+        <div class="result-number">{{ result.probability }}%</div>
+        <div class="progress my-3" style="height: 9px">
+          <div
+            class="progress-bar"
+            style="width:{{ result.probability }}%"
+          ></div>
+        </div>
+        <span
+          class="pill {% if result.risk=='High' %}pill-high{% elif result.risk=='Medium' %}pill-medium{% else %}pill-low{% endif %}"
+          >{{ result.risk }} risk</span
+        >
+      </div>
+      <p class="small-note mt-3">
+        This is a statistical estimate from synthetic/demo data, not a fact
+        about an individual. Do not use it alone for employment decisions.
+      </p>
+    </div>
+    {% else %}
+    <div class="card-clean section-card h-100">
+      <h3 class="section-title mb-2">How to read the result</h3>
+      <p class="section-subtitle mb-4">
+        Probability bands are a demonstration convention, not universal
+        thresholds.
+      </p>
+      <div class="mb-3">
+        <span class="pill pill-low">Low · below 35%</span>
+        <p class="small-note mt-2">
+          Lower estimated probability in this model.
+        </p>
+      </div>
+      <div class="mb-3">
+        <span class="pill pill-medium">Medium · 35–64%</span>
+        <p class="small-note mt-2">
+          Moderate estimated probability; inspect context carefully.
+        </p>
+      </div>
+      <div>
+        <span class="pill pill-high">High · 65% and above</span>
+        <p class="small-note mt-2">
+          Higher estimated probability; validate model performance before use.
+        </p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+<div class="card-clean section-card">
+  <h3 class="section-title">Prediction history</h3>
+  <p class="section-subtitle mb-3">
+    Saved outputs with timestamps for auditability
+  </p>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Probability</th>
+          <th>Risk</th>
+          <th>Model</th>
+          <th>Predicted at</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in history %}
+        <tr>
+          <td>
+            <span class="emp-name"
+              >{{ p.name or 'Manual assessment / deleted employee' }}</span
+            >{% if p.employee_code %}<small class="muted d-block"
+              >{{ p.employee_code }}</small
+            >{% endif %}
+          </td>
+          <td>{{ '%.1f'|format(p.probability*100) }}%</td>
+          <td>
+            <span
+              class="pill {% if p.risk_level=='High' %}pill-high{% elif p.risk_level=='Medium' %}pill-medium{% else %}pill-low{% endif %}"
+              >{{ p.risk_level }}</span
+            >
+          </td>
+          <td>{{ p.model_name }}</td>
+          <td>{{ p.predicted_at }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="empty-state">No predictions saved yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

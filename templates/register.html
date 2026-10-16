@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% block title %}Create account · PeoplePulse{%
+endblock %}{% block content %}
+<div class="auth-card">
+  <div class="auth-brand"><span>◈</span> PeoplePulse</div>
+  <h4 class="fw-bold mb-2">Create your account</h4>
+  <p class="muted">Set up an HR analytics workspace.</p>
+  <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="mb-3">
+      <label class="form-label">USERNAME</label
+      ><input class="form-control" name="username" minlength="3" required />
+    </div>
+    <div class="mb-4">
+      <label class="form-label">PASSWORD (8+ CHARACTERS)</label
+      ><input
+        class="form-control"
+        type="password"
+        name="password"
+        minlength="8"
+        required
+      />
+    </div>
+    <button class="btn btn-primary w-100">Create account →</button>
+  </form>
+  <div class="small-note mt-3">
+    Already registered? <a href="{{ url_for('main.login') }}">Sign in</a>
+  </div>
+</div>
+{% endblock %}

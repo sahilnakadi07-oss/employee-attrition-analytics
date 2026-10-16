@@ -1,0 +1,38 @@
+{% extends 'base.html' %}{% block title %}Sign in · PeoplePulse{% endblock %}{%
+block content %}
+<div class="auth-card">
+  <div class="auth-brand"><span>◈</span> PeoplePulse</div>
+  <p class="muted">Employee Attrition Analytics & Prediction System</p>
+  <h4 class="fw-bold mb-2">Welcome back</h4>
+  <p class="muted">Sign in to your HR analytics workspace.</p>
+  <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="mb-3">
+      <label class="form-label">USERNAME</label
+      ><input
+        class="form-control"
+        name="username"
+        required
+        autocomplete="username"
+        placeholder="Your username"
+      />
+    </div>
+    <div class="mb-4">
+      <label class="form-label">PASSWORD</label
+      ><input
+        class="form-control"
+        type="password"
+        name="password"
+        required
+        autocomplete="current-password"
+        placeholder="Your password"
+      />
+    </div>
+    <button class="btn btn-primary w-100">Sign in →</button>
+  </form>
+  <div class="small-note mt-4">Demo login: <b>admin</b> / <b>Admin@123</b></div>
+  <div class="small-note mt-3">
+    New here? <a href="{{ url_for('main.register') }}">Create an account</a>
+  </div>
+</div>
+{% endblock %}

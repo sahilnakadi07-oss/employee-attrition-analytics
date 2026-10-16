@@ -1,0 +1,250 @@
+{% extends 'base.html' %}{% block title %}{{ 'Edit' if item else 'Add' }}
+employee · PeoplePulse{% endblock %}{% block page_heading %}Employee
+management{% endblock %}{% block content %}
+<div class="page-intro">
+  <div>
+    <h2>{{ 'Edit employee' if item else 'Add employee' }}</h2>
+    <p>Keep employee details accurate for meaningful analytics.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('main.employees') }}"
+    >← Back to directory</a
+  >
+</div>
+<form method="post" class="card-clean section-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h3 class="section-title mb-3">Basic information</h3>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">EMPLOYEE CODE *</label
+      ><input
+        class="form-control"
+        name="employee_code"
+        required
+        value="{{ item.employee_code if item else '' }}"
+      />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">FULL NAME *</label
+      ><input
+        class="form-control"
+        name="name"
+        required
+        value="{{ item.name if item else '' }}"
+      />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">DEPARTMENT *</label
+      ><input
+        class="form-control"
+        name="department"
+        required
+        value="{{ item.department if item else '' }}"
+        placeholder="e.g. Engineering"
+      />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">DESIGNATION *</label
+      ><input
+        class="form-control"
+        name="designation"
+        required
+        value="{{ item.designation if item else '' }}"
+      />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">JOINING DATE</label
+      ><input
+        type="date"
+        class="form-control"
+        name="joining_date"
+        value="{{ item.joining_date if item else '' }}"
+      />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">MONTHLY SALARY (₹)</label
+      ><input
+        type="number"
+        min="0"
+        class="form-control"
+        name="salary"
+        value="{{ item.salary if item else 45000 }}"
+      />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">AGE</label
+      ><input
+        type="number"
+        min="18"
+        max="100"
+        class="form-control"
+        name="age"
+        value="{{ item.age if item else 30 }}"
+      />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">GENDER</label
+      ><select class="form-select" name="gender">
+        {% for x in ['Female','Male','Non-binary','Prefer not to say'] %}
+        <option {% if item and item.gender="" ="x" %}selected{% endif %}>
+          {{ x }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">MARITAL STATUS</label
+      ><select class="form-select" name="marital_status">
+        {% for x in ['Single','Married','Divorced','Prefer not to say'] %}
+        <option
+          {%
+          if
+          item
+          and
+          item.marital_status=""
+          ="x"
+          %}selected{%
+          endif
+          %}
+        >
+          {{ x }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <hr class="my-4" />
+  <h3 class="section-title mb-3">Work & engagement indicators</h3>
+  <div class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label">JOB SATISFACTION (1–4)</label
+      ><input
+        type="number"
+        min="1"
+        max="4"
+        name="job_satisfaction"
+        class="form-control"
+        value="{{ item.job_satisfaction if item else 3 }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">WORK-LIFE BALANCE (1–4)</label
+      ><input
+        type="number"
+        min="1"
+        max="4"
+        name="work_life_balance"
+        class="form-control"
+        value="{{ item.work_life_balance if item else 3 }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">OVERTIME</label
+      ><select class="form-select" name="overtime">
+        <option {% if not item or item.overtime="" ="No" %}selected{% endif %}>
+          No
+        </option>
+        <option {% if item and item.overtime="" ="Yes" %}selected{% endif %}>
+          Yes
+        </option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">YEARS AT COMPANY</label
+      ><input
+        type="number"
+        min="0"
+        step="0.5"
+        name="years_at_company"
+        class="form-control"
+        value="{{ item.years_at_company if item else 1 }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">YEARS SINCE PROMOTION</label
+      ><input
+        type="number"
+        min="0"
+        step="0.5"
+        name="years_since_promotion"
+        class="form-control"
+        value="{{ item.years_since_promotion if item else 0 }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">TRAINING HOURS (YEAR)</label
+      ><input
+        type="number"
+        min="0"
+        step="0.5"
+        name="training_hours"
+        class="form-control"
+        value="{{ item.training_hours if item else 3 }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">PERFORMANCE RATING (1–4)</label
+      ><input
+        type="number"
+        min="1"
+        max="4"
+        step="0.5"
+        name="performance_rating"
+        class="form-control"
+        value="{{ item.performance_rating if item else 3 }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">ABSENT DAYS / YEAR</label
+      ><input
+        type="number"
+        min="0"
+        name="absent_days"
+        class="form-control"
+        value="{{ item.absent_days if item else 2 }}"
+      />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">HISTORICAL ATTRITION LABEL</label
+      ><select class="form-select" name="attrition">
+        <option
+          {%
+          if
+          not
+          item
+          or
+          item.attrition|lower=""
+          ="no"
+          %}selected{%
+          endif
+          %}
+        >
+          No
+        </option>
+        <option
+          {%
+          if
+          item
+          and
+          item.attrition|lower=""
+          ="yes"
+          %}selected{%
+          endif
+          %}
+        >
+          Yes
+        </option>
+      </select>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mt-4">
+    <button class="btn btn-primary">Save employee</button
+    ><a class="btn btn-outline-secondary" href="{{ url_for('main.employees') }}"
+      >Cancel</a
+    >
+  </div>
+  <p class="small-note mt-3">
+    Historical attrition is a dataset label, not a prediction. Prediction is
+    available in the separate model module.
+  </p>
+</form>
+{% endblock %}

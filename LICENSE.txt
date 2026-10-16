@@ -1,0 +1,1 @@
+Educational demo project. You may modify and use this code for learning. No warranty. Do not use the included synthetic dataset or model outputs for real employment decisions.

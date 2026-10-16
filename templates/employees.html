@@ -1,0 +1,108 @@
+{% extends 'base.html' %}{% block title %}Employees · PeoplePulse{% endblock
+%}{% block page_heading %}Employee directory{% endblock %}{% block content %}
+<div class="page-intro">
+  <div>
+    <h2>Employee directory</h2>
+    <p>Manage employee records and review workforce attributes.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('main.upload') }}"
+      >⇧ Import CSV</a
+    ><a class="btn btn-primary" href="{{ url_for('main.employee_form') }}"
+      >＋ Add employee</a
+    >
+  </div>
+</div>
+<div class="card-clean section-card">
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-6">
+      <input
+        class="form-control"
+        name="q"
+        value="{{ q }}"
+        placeholder="Search name, employee code or designation..."
+      />
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="department">
+        <option value="">All departments</option>
+        {% for d in departments %}
+        <option value="{{ d }}" {% if selected == d %}selected{% endif %}>
+          {{ d }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button class="btn btn-primary flex-grow-1">Filter</button
+      ><a
+        class="btn btn-outline-secondary"
+        href="{{ url_for('main.employees') }}"
+        >Reset</a
+      >
+    </div>
+  </form>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="section-title">All employees</h3>
+    <span class="pill pill-neutral">{{ employees|length }} records shown</span>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Department</th>
+          <th>Designation</th>
+          <th>Joined</th>
+          <th>Salary / month</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in employees %}
+        <tr>
+          <td>
+            <div class="emp-name">{{ e.name }}</div>
+            <small class="muted">{{ e.employee_code }}</small>
+          </td>
+          <td>{{ e.department }}</td>
+          <td>{{ e.designation }}</td>
+          <td>{{ e.joining_date }}</td>
+          <td>₹{{ '{:,.0f}'.format(e.salary) }}</td>
+          <td>
+            {% if e.attrition|lower=='yes' %}<span class="pill pill-high"
+              >Exited</span
+            >{% else %}<span class="pill pill-low">Active</span>{% endif %}
+          </td>
+          <td>
+            <a
+              class="btn btn-sm btn-outline-secondary"
+              href="{{ url_for('main.employee_form',employee_id=e.employee_id) }}"
+              >Edit</a
+            >
+            <form
+              method="post"
+              action="{{ url_for('main.employee_delete',employee_id=e.employee_id) }}"
+              style="display: inline"
+              onsubmit="
+                return confirm('Delete this employee and related records?');
+              "
+            >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="empty-state">
+            No employees match this filter.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

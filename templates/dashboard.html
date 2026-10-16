@@ -1,0 +1,186 @@
+{% extends 'base.html' %}{% block title %}Dashboard · PeoplePulse{% endblock
+%}{% block page_heading %}Dashboard overview{% endblock %}{% block content %}
+<div class="page-intro">
+  <div>
+    <h2>{{ greeting }}, {{ session.get('username') }} <span></span></h2>
+    <p>Here’s what’s happening across your people data today.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('main.employees') }}"
+    >＋ Manage employees</a
+  >
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card-clean stat-card">
+      <div class="stat-icon">♙</div>
+      <div class="stat-label">Total employees</div>
+      <div class="stat-number">{{ '{:,}'.format(metrics.total) }}</div>
+      <div class="stat-foot">People in your dataset</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card-clean stat-card">
+      <div class="stat-icon" style="background: #ffeded; color: #dc5867">↗</div>
+      <div class="stat-label">Attrition cases</div>
+      <div class="stat-number">{{ metrics.attrition }}</div>
+      <div class="stat-foot">Recorded as left in dataset</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card-clean stat-card">
+      <div class="stat-icon" style="background: #e5f8ef; color: #21966a">%</div>
+      <div class="stat-label">Attrition rate</div>
+      <div class="stat-number">
+        {{ metrics.rate }}<small style="font-size: 14px">%</small>
+      </div>
+      <div class="stat-foot">Attrition cases / all employees</div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card-clean stat-card">
+      <div class="stat-icon" style="background: #fff3dc; color: #b87b17">₹</div>
+      <div class="stat-label">Average monthly salary</div>
+      <div class="stat-number">₹{{ '{:,.0f}'.format(metrics.avg_salary) }}</div>
+      <div class="stat-foot">Across all departments</div>
+    </div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-xl-7">
+    <div class="card-clean section-card h-100">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div>
+          <h3 class="section-title">Attrition trend · {{ trend_year }}</h3>
+          <div class="section-subtitle">Monthly recorded exits for the selected year</div>
+        </div>
+        {% if trend_years %}
+        <form method="get" action="{{ url_for('main.dashboard') }}" class="d-flex align-items-center gap-2">
+          <label for="attritionYear" class="small fw-semibold mb-0">Year</label>
+          <select id="attritionYear" name="year" class="form-select form-select-sm" style="min-width:105px" onchange="this.form.submit()">
+            {% for year in trend_years %}<option value="{{ year }}" {% if year|string == trend_year|string %}selected{% endif %}>{{ year }}</option>{% endfor %}
+          </select>
+          <noscript><button class="btn btn-sm btn-primary" type="submit">View</button></noscript>
+        </form>
+        {% endif %}
+      </div>
+      <div class="section-subtitle mb-2">{{ trend_year }} recorded attrition rate: <strong>{{ selected_year_rate }}%</strong> of all employees in the current dataset (recorded exits / current dataset size)</div>
+      {% if has_exit_dates %}<div class="chart-box"><canvas id="monthlyAttritionChart"></canvas></div>
+      {% else %}<div class="empty-state">Monthly trends will appear when your uploaded CSV includes an <strong>AttritionDate</strong> column for employees marked as exited. Exit dates are not guessed from joining dates.</div>{% endif %}
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="card-clean section-card h-100">
+      <h3 class="section-title">Yearly attrition overview</h3>
+      <div class="section-subtitle">Recorded exits by calendar year</div>
+      {% if has_exit_dates %}<div class="chart-box"><canvas id="yearlyAttritionChart"></canvas></div>
+      {% else %}<div class="empty-state">Add actual exit dates in the optional <strong>AttritionDate</strong> CSV column to populate yearly totals.</div>{% endif %}
+    </div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-xl-7">
+    <div class="card-clean section-card h-100">
+      <div class="d-flex justify-content-between">
+        <div>
+          <h3 class="section-title">Department overview</h3>
+          <div class="section-subtitle">
+            Headcount and attrition cases by team
+          </div>
+        </div>
+        <a
+          href="{{ url_for('main.analytics') }}"
+          class="small text-decoration-none"
+          >Full analysis →</a
+        >
+      </div>
+      <div class="chart-box"><canvas id="deptChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="card-clean section-card h-100">
+      <h3 class="section-title">Attrition by department</h3>
+      <div class="section-subtitle mb-4">
+        Share of recorded exits in each team
+      </div>
+      {% for d in departments %}
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="fw-semibold" style="font-size: 12px"
+            >{{ d.department }}</span
+          ><span class="muted" style="font-size: 11px"
+            >{{ d.attrited or 0 }} of {{ d.total }}</span
+          >
+        </div>
+        <div class="progress">
+          <div
+            class="progress-bar"
+            style="width:{{ ((d.attrited or 0)/d.total*100) if d.total else 0 }}%"
+          ></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state">No employee data yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<div class="card-clean section-card">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="section-title">Recently added employees</h3>
+      <div class="section-subtitle">
+        Latest records in your employee directory
+      </div>
+    </div>
+    <a
+      href="{{ url_for('main.employees') }}"
+      class="btn btn-outline-secondary btn-sm"
+      >View directory</a
+    >
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Department</th>
+          <th>Designation</th>
+          <th>Monthly salary</th>
+          <th>Attrition</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in latest %}
+        <tr>
+          <td>
+            <div class="emp-name">{{ e.name }}</div>
+            <small class="muted">{{ e.employee_code }}</small>
+          </td>
+          <td>{{ e.department }}</td>
+          <td>{{ e.designation }}</td>
+          <td>₹{{ '{:,.0f}'.format(e.salary) }}</td>
+          <td>
+            {% if e.attrition|lower == 'yes' %}<span class="pill pill-high"
+              >Exited</span
+            >{% else %}<span class="pill pill-low">Retained</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="empty-state">
+            No employees yet. Import the sample CSV to get started.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}{% block scripts %}
+<script>
+  const monthlyAttrition={{ monthly_attrition|tojson }}; const yearlyAttrition={{ yearly_attrition|tojson }};
+  const monthlyCanvas=document.getElementById('monthlyAttritionChart'); if(monthlyCanvas){new Chart(monthlyCanvas,{type:'line',data:{labels:monthlyAttrition.map(x=>x.label),datasets:[{label:'Attrition count',data:monthlyAttrition.map(x=>x.count),borderColor:'#3478f6',backgroundColor:'rgba(52,120,246,.14)',fill:true,tension:.3,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});}
+  const yearlyCanvas=document.getElementById('yearlyAttritionChart'); if(yearlyCanvas){new Chart(yearlyCanvas,{type:'bar',data:{labels:yearlyAttrition.map(x=>x.label),datasets:[{label:'Attrition count',data:yearlyAttrition.map(x=>x.count),backgroundColor:'#3478f6',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:(ctx)=>{const row=yearlyAttrition[ctx.dataIndex];return row ? 'Dataset-based rate: '+row.rate+'%' : '';}}}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});}
+  const deptData={{ departments|tojson }};new Chart(document.getElementById('deptChart'),{type:'bar',data:{labels:deptData.map(d=>d.department),datasets:[{label:'Employees',data:deptData.map(d=>d.total),backgroundColor:'#5c74eb',borderRadius:6,maxBarThickness:28},{label:'Attrition',data:deptData.map(d=>d.attrited||0),backgroundColor:'#f1a4ae',borderRadius:6,maxBarThickness:28}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:7,font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,grid:{color:'#eff2f7'},ticks:{precision:0,font:{size:10}}}}}});
+</script>
+{% endblock %}

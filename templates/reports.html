@@ -1,0 +1,144 @@
+{% extends 'base.html' %}{% block title %}Reports & model · PeoplePulse{%
+endblock %}{% block page_heading %}Reports & model evaluation{% endblock %}{%
+block content %}
+<div class="page-intro">
+  <div>
+    <h2>Reports & model evaluation</h2>
+    <p>
+      Review workforce KPIs, train candidate classifiers and export data for
+      further analysis.
+    </p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('main.report_download') }}"
+    >↓ Download CSV report</a
+  >
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card-clean stat-card">
+      <div class="stat-label">Total employees</div>
+      <div class="stat-number">{{ metrics.total }}</div>
+      <div class="stat-foot">Current database records</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card-clean stat-card">
+      <div class="stat-label">Historical attrition rate</div>
+      <div class="stat-number">{{ metrics.rate }}%</div>
+      <div class="stat-foot">Descriptive metric, not prediction</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card-clean stat-card">
+      <div class="stat-label">Average monthly salary</div>
+      <div class="stat-number">₹{{ '{:,.0f}'.format(metrics.avg_salary) }}</div>
+      <div class="stat-foot">Across current employee records</div>
+    </div>
+  </div>
+</div>
+<div class="card-clean section-card mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <h3 class="section-title">Model training & comparison</h3>
+      <p class="section-subtitle">
+        Uses a stratified holdout test set plus stratified cross-validation on training data. Candidate models: Logistic Regression and Random Forest; class weights address imbalance, and the selected model uses sigmoid probability calibration.
+      </p>
+    </div>
+    {% if session.get('role') == 'Admin' %}<form method="post" action="{{ url_for('main.train') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary">Train models now →</button>
+    </form>{% endif %}
+  </div>
+  <div class="alert alert-info mt-3 mb-0 small">
+    Dataset note: the included CSV is synthetically generated for demonstration.
+    Scores are not evidence of real-world predictive validity.
+  </div>
+</div>
+{% if results %}
+<div class="card-clean section-card mb-4">
+  <h3 class="section-title">Evaluation metrics</h3>
+  <p class="section-subtitle mb-3">
+    Holdout test-set scores plus cross-validation results from the most recent training run{% if info.rows %} · {{ info.rows }} rows{% endif %}
+  </p>
+  {% if info.rows %}<div class="alert alert-secondary small">Class balance: <strong>{{ info.retained }}</strong> retained and <strong>{{ info.attrited }}</strong> attrited records · majority/minority ratio <strong>{{ info.imbalance_ratio }}:1</strong>. Class weighting is used during training; interpret metrics with the minority class in mind.</div>{% endif %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Accuracy</th>
+          <th>Precision</th>
+          <th>Recall</th>
+          <th>F1 score</th>
+          <th>CV F1 (mean ± SD)</th>
+          <th>CV precision / recall</th>
+          <th>Holdout ROC-AUC</th>
+          <th>CV ROC-AUC</th>
+          <th>Brier (calibrated)</th>
+          <th>Confusion matrix (actual 0/1 × predicted 0/1)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td class="emp-name">{{ r.model }}</td>
+          <td>{{ '%.3f'|format(r.accuracy) }}</td>
+          <td>{{ '%.3f'|format(r.precision) }}</td>
+          <td>{{ '%.3f'|format(r.recall) }}</td>
+          <td>
+            <span class="pill pill-neutral">{{ '%.3f'|format(r.f1) }}</span>
+          </td>
+          <td>{{ '%.3f'|format(r.cv_f1_mean) }} ± {{ '%.3f'|format(r.cv_f1_std) }}</td>
+          <td>{{ '%.3f'|format(r.cv_precision_mean) }} / {{ '%.3f'|format(r.cv_recall_mean) }}</td>
+          <td>{{ '%.3f'|format(r.roc_auc) if r.roc_auc is not none else 'N/A' }}</td>
+          <td>{{ '%.3f'|format(r.cv_roc_auc_mean) }}</td>
+          <td>{{ '%.3f'|format(r.calibrated_brier_score) if r.calibrated_brier_score is defined else '—' }}</td>
+          <td><code>{{ r.confusion_matrix }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="small-note mt-3">
+    Class 0 = retained; class 1 = attrition. Model selection uses mean cross-validation F1. ROC-AUC measures ranking; Brier score measures probability error (lower is better). The calibrated Brier score is reported for the selected model. Class counts and imbalance are assessed during training. Holdout results are estimates, not guarantees of future performance.
+  </p>
+</div>
+{% else %}
+<div class="card-clean section-card mb-4">
+  <div class="empty-state">
+    <h5 class="fw-bold">No evaluation run yet</h5>
+    <p>
+      Click “Train models now” to fit both classifiers, compare metrics and save
+      the best model.
+    </p>
+  </div>
+</div>
+{% endif %}
+<div class="card-clean section-card">
+  <h3 class="section-title">Methodology & responsible use</h3>
+  <div class="row g-3 mt-1">
+    <div class="col-md-4">
+      <span class="pill pill-neutral">01 · Descriptive</span>
+      <p class="small-note mt-2">
+        Attrition rate, salary averages, tenure distribution and department
+        comparisons describe the dataset.
+      </p>
+    </div>
+    <div class="col-md-4">
+      <span class="pill pill-neutral">02 · Predictive</span>
+      <p class="small-note mt-2">
+        Two candidate classifiers are compared using accuracy, precision,
+        recall, F1 and a confusion matrix.
+      </p>
+    </div>
+    <div class="col-md-4">
+      <span class="pill pill-neutral">03 · Responsible use</span>
+      <p class="small-note mt-2">
+        Synthetic labels can encode artificial patterns. Do not use the model
+        for hiring, firing, promotion or other high-impact decisions. Audit
+        fairness and validate with consented, representative real data first.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

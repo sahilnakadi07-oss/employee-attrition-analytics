@@ -1,0 +1,65 @@
+{% extends 'base.html' %}{% block title %}Import data · PeoplePulse{% endblock
+%}{% block page_heading %}HR data upload{% endblock %}{% block content %}
+<div class="page-intro">
+  <div>
+    <h2>Import HR dataset</h2>
+    <p>Upload a validated CSV to add or update employee records.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('main.employees') }}"
+    >← Employee directory</a
+  >
+</div>
+<div class="row g-3">
+  <div class="col-xl-7">
+    <div class="card-clean section-card">
+      <h3 class="section-title mb-2">Upload a CSV file</h3>
+      <p class="section-subtitle mb-4">
+        CSV only · Maximum 8 MB · EmployeeNumber is used as the unique employee
+        code
+      </p>
+      <p class="small text-muted">Optional: include an <code>AttritionDate</code> column (YYYY-MM-DD) for employees who left to enable monthly and yearly attrition trends. Exit dates are not inferred.</p>
+<form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="upload-zone">
+          <div class="upload-icon">⇧</div>
+          <h5 class="fw-bold">Choose your HR dataset</h5>
+          <p class="muted">Select a .csv file from your computer</p>
+          <input
+            class="form-control mt-3"
+            type="file"
+            name="dataset"
+            accept=".csv,text/csv"
+            required
+          /><button class="btn btn-primary mt-3">Validate & import →</button>
+        </div>
+      </form>
+      <div class="small-note mt-3">
+        Use the included
+        <a href="{{ url_for('main.dataset_download') }}">sample dataset</a> from
+        the project folder if you need test data.
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="card-clean section-card">
+      <h3 class="section-title mb-2">Required columns</h3>
+      <p class="section-subtitle mb-3">
+        Your file must include these columns for the provided importer.
+      </p>
+      {% for col in
+      ['EmployeeNumber','Age','Department','JobRole','MonthlyIncome','JobSatisfaction','WorkLifeBalance','OverTime','YearsAtCompany','YearsSinceLastPromotion','TrainingTimesLastYear','PerformanceRating','AbsentDaysLastYear','Attrition']
+      %}
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="pill pill-low">✓</span
+        ><span style="font-size: 11px">{{ col }}</span>
+      </div>
+      {% endfor %}
+      <hr />
+      <p class="small-note">
+        Optional columns: Gender, MaritalStatus. Duplicate employee codes update
+        existing records. Uploads are stored with sanitized filenames.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

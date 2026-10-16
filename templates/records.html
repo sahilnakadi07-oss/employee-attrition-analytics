@@ -1,0 +1,222 @@
+{% extends 'base.html' %}{% block title %}Attendance & performance ·
+PeoplePulse{% endblock %}{% block page_heading %}Attendance & performance{%
+endblock %}{% block content %}
+<div class="page-intro">
+  <div>
+    <h2>Attendance & performance</h2>
+    <p>Record monthly attendance and dated performance reviews for employees.</p>
+    <p class="small text-muted mb-0">Demo accounts are prefilled with clearly labelled illustrative starter records. Replace these with verified company data before using the system for real HR reporting.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('main.employees') }}"
+    >Employee directory →</a
+  >
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-xl-6">
+    <div class="card-clean section-card">
+      <h3 class="section-title mb-2">Monthly attendance</h3>
+      <p class="section-subtitle mb-3">
+        Saving the same employee/month updates that attendance record.
+      </p>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="record_type" value="attendance" />
+        <div class="mb-3">
+          <label class="form-label">EMPLOYEE</label
+          ><select name="employee_id" class="form-select" required>
+            <option value="">Choose employee</option>
+            {% for e in employees %}
+            <option value="{{ e.employee_id }}">
+              {{ e.employee_code }} · {{ e.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">MONTH</label
+            ><input
+              type="month"
+              name="month"
+              class="form-control"
+              value="{{ month }}"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">PRESENT DAYS</label
+            ><input
+              type="number"
+              name="present_days"
+              class="form-control"
+              min="0"
+              max="31"
+              value="22"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">LEAVE DAYS</label
+            ><input
+              type="number"
+              name="leave_days"
+              class="form-control"
+              min="0"
+              max="31"
+              value="0"
+              required
+            />
+          </div>
+        </div>
+        <button class="btn btn-primary mt-3">Save attendance</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-xl-6">
+    <div class="card-clean section-card">
+      <h3 class="section-title mb-2">Performance review</h3>
+      <p class="section-subtitle mb-3">
+        Add a dated appraisal and training record.
+      </p>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="record_type" value="performance" />
+        <div class="mb-3">
+          <label class="form-label">EMPLOYEE</label
+          ><select name="employee_id" class="form-select" required>
+            <option value="">Choose employee</option>
+            {% for e in employees %}
+            <option value="{{ e.employee_id }}">
+              {{ e.employee_code }} · {{ e.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">RATING (1–5)</label
+            ><input
+              type="number"
+              name="rating"
+              class="form-control"
+              min="1"
+              max="5"
+              step="0.5"
+              value="3"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">TRAINING HOURS</label
+            ><input
+              type="number"
+              name="training_hours"
+              class="form-control"
+              min="0"
+              step="0.5"
+              value="0"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">APPRAISAL (1–5)</label
+            ><input
+              type="number"
+              name="appraisal_score"
+              class="form-control"
+              min="1"
+              max="5"
+              step="0.5"
+              value="3"
+              required
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">REVIEW DATE</label
+            ><input
+              type="date"
+              name="review_date"
+              class="form-control"
+              value="{{ today }}"
+              required
+            />
+          </div>
+        </div>
+        <button class="btn btn-primary mt-3">Save performance review</button>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="card-clean section-card mb-3">
+  <h3 class="section-title">Attendance records</h3>
+  <p class="section-subtitle mb-3">Latest 100 records</p>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Month</th>
+          <th>Present days</th>
+          <th>Leave days</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in attendance %}
+        <tr>
+          <td>
+            <span class="emp-name">{{ a.name }}</span
+            ><small class="muted d-block">{{ a.employee_code }}</small>
+          </td>
+          <td>{{ a.month }}</td>
+          <td>{{ a.present_days }}</td>
+          <td>{{ a.leave_days }}</td>
+          <td>{% if a.record_source == 'demo' %}<span class="badge text-bg-warning">Demo data</span>{% else %}<span class="badge text-bg-success">Manual</span>{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="empty-state">No attendance records yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card-clean section-card">
+  <h3 class="section-title">Performance reviews</h3>
+  <p class="section-subtitle mb-3">Latest 100 reviews</p>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Review date</th>
+          <th>Rating</th>
+          <th>Training hours</th>
+          <th>Appraisal score</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in performance %}
+        <tr>
+          <td>
+            <span class="emp-name">{{ p.name }}</span
+            ><small class="muted d-block">{{ p.employee_code }}</small>
+          </td>
+          <td>{{ p.review_date }}</td>
+          <td>{{ p.rating }}/5</td>
+          <td>{{ p.training_hours }}</td>
+          <td>{{ p.appraisal_score }}/5</td>
+          <td>{% if p.record_source == 'demo' %}<span class="badge text-bg-warning">Demo data</span>{% else %}<span class="badge text-bg-success">Manual</span>{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="empty-state">No performance reviews yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
